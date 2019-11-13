@@ -5,6 +5,7 @@ import time
 import json
 import hashlib
 import hmac
+import sys
 
 class DCAbot:
 
@@ -13,17 +14,32 @@ class DCAbot:
         
     def read_secret(self):
         # Let's be secure. Just make sure you don't have a keylogger.
-        # Do not type your secret key into this file. It will ask for input
+        # Do not type your secret key into this file: this script will ask for input when you run it.
         self.api_secret = getpass(prompt='API secret: ')
 
+    def parse_interval(self, x):
+        if x == "w":
+            return 604800
+        elif x == "d":
+            return 86400
+        elif x == "h":
+            return 3600
+        elif x == "m":
+            return 60
+        elif x == "s":
+            return 1
+        else:
+            print("Invalid input. Enter number + w, d, h, m or s. Example = 1w, 4d, 11h, 20m or 30s") 
+            sys.exit()
 
     def read_purchase_interval(self):
-        self.purchase_interval = input('How often do you want to buy bitcoin? (in seconds) ')
+        i = input('How much time should the bot wait between buying? (1d, 3h, 20m, etc) : ')
+        self.purchase_interval = int(i[:-1]) * self.parse_interval(i[-1])
+        print(self.purchase_interval)
 
     def read_purchase_volume(self):
         # TODO: Make this work
-        self.purchase_volume = input('How much JPY will you spend every ' \
-                                    + str(self.purchase_interval) + ' seconds? ')
+        self.purchase_volume = input('Spend how much JPY each purchase? (orders below 0.001BTC will fail)')
 
     def sleep(self):
         time.sleep(float(self.purchase_interval) - (time.time() % float(self.purchase_interval)))
