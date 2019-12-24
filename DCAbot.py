@@ -39,13 +39,23 @@ class DCAbot:
 
     def read_purchase_volume(self):
         # TODO: Make this work
-        self.purchase_volume = input('Spend how much JPY each purchase? (orders below 0.001BTC will fail)')
+        self.purchase_volume = input('Spend how much JPY each purchase? (orders below 0.001BTC + transaction fee will fail)')
+
+    def confirm(self):
+        print("Purchase {} every {}".format(self.purchase_volume,self.purchase_interval))
+        i = input("Is this correct? And are you sure you wish to proceed? (Any orders made after this cannot be undone) Y/N ")
+        return i
+
+    def get_next_step(self):
+        i = input ("Do you want to change the values ? Y/N ")
+        return i
 
     def sleep(self):
         time.sleep(float(self.purchase_interval) - (time.time() % float(self.purchase_interval)))
 
     def run(self):
         while True:
+            #TODO: This section needs cleaning up.
             domain = "https://api.bitflyer.com"
 
             # Get the latest price for analysis later
@@ -90,14 +100,17 @@ class DCAbot:
                     if header:
                         sess.headers.update(header)
  
-                    response = sess.post(domain + path, data=json.dumps(order_info), timeout=500)
+                    #response = sess.post(domain + path, data=json.dumps(order_info), timeout=500)
 
             except requests.RequestException as ex:
                 print(ex)
                 raise ex
 
-            if len(response.content) > 0:
-                print(json.loads(response.content.decode("utf-8")))
+            #if len(response.content) > 0:
+            #    print(json.loads(response.content.decode("utf-8")))
+
+            output = float(self.purchase_volume) / current_price
+            print(output)
 
             self.sleep()
 
@@ -105,7 +118,12 @@ if __name__ == '__main__':
     bot = DCAbot()
 
     bot.read_secret()
-    bot.read_purchase_interval()
-    bot.read_purchase_volume()
-
-    bot.run()
+    while True:
+        bot.read_purchase_interval()
+        bot.read_purchase_volume()
+        ready_to_trade = bot.confirm()
+        if 'y' in ready_to_trade.lower():
+            bot.run()
+        else:
+            if 'n' in bot.get_next_step().lower():
+              exit()
